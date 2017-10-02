@@ -4,11 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 //TODO feels not good but it works ...
@@ -22,51 +20,30 @@ func (c *Check) parseLine(line []string) (cpl bool, err error) {
 				c.Comment.Help = strings.Join(line[2:], " ")
 			}
 		case "TYPE":
-			if len(line) > 3 {
+			if len(line) == 3 {
 				c.Comment.Type = line[2]
 			}
 		case "INTERVAL":
-			if len(line) > 3 {
+			if len(line) == 3 {
 				i, err := strconv.Atoi(line[2])
 				if err != nil {
 					return false, fmt.Errorf("could not read INTERVAL: %s", err)
 				}
-				c.Interval = time.Second * time.Duration(i)
+				c.Interval = int64(i)
 			}
 		default:
 			c.Comment.Comment += strings.Join(line[1:], " ") + "\n"
 		}
+		return false, nil
 	}
-	// no comment
-	if line[len(line)-1] == "\\" {
-		if len(line) > 2 {
-			if c.Name == "" {
-				c.Name, c.Command = line[0], strings.Join(line[1:len(line)-1], " ")
-			} else {
-				c.Command += " " + strings.Join(line[:len(line)-1], " ")
-			}
-		} else {
-			if c.Name == "" {
-				c.Name = line[0]
-			} else {
-				c.Command += line[0]
-			}
-		}
+
+	if len(line) >= 2 {
+		c.Name, c.Command = line[0], strings.Join(line[1:], " ")
 	}
-	if line[0] != "#" && line[len(line)-1] != "\\" {
-		if c.Name == "" && c.Command == "" {
-			c.Name, c.Command = line[0], strings.Join(line[1:], " ")
-		} else {
-			if c.Command == "" {
-				c.Command = strings.Join(line, " ")
-			} else {
-				c.Command += " " + strings.Join(line, " ")
-			}
-		}
-		if c.Valid() {
-			return true, nil
-		}
+	if c.Valid() {
+		return true, nil
 	}
+
 	return false, nil
 }
 
@@ -74,7 +51,7 @@ func loadCfgDir(d string) (c Checks, e error) {
 
 	files, err := ioutil.ReadDir(d)
 	if err != nil {
-		log.Fatal("could not read in conf dir:", err)
+		return c, fmt.Errorf("could not read in conf dir: %s", err)
 	}
 
 	for _, f := range files {
@@ -90,35 +67,56 @@ func loadCfgDir(d string) (c Checks, e error) {
 	return c, nil
 }
 
-func loadCfg(f string) (c Checks, err error) {
-	check := NewCheck()
+//ldCfg merge escaped lines into []string
+func ldCfg(f string) (lines []string, err error) {
 
 	file, err := os.Open(f)
 	if err != nil {
-		return c, fmt.Errorf("could not open file %s: %s", f, err)
+		return lines, fmt.Errorf("could not open file %s: %s", f, err)
 	}
 	defer file.Close()
 
+	var appendLine string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		line := strings.Fields(scanner.Text())
-
-		// empty
-		if len(line) == 0 {
+		line := string(scanner.Text())
+		if len(line) > 0 && string(line[len(line)-1]) == "\\" {
+			appendLine = strings.Join([]string{appendLine, string(line[:len(line)-1])}, " ")
 			continue
 		}
-		complete, err := check.parseLine(line)
+		appendLine = strings.Join([]string{appendLine, line}, " ")
+		lines = append(lines, appendLine)
+		appendLine = ""
+	}
+	if err := scanner.Err(); err != nil {
+		return lines, fmt.Errorf("Scanner error: %s", err)
+	}
+	return lines, nil
+}
+
+func loadCfg(f string) (c Checks, err error) {
+	check := NewCheck()
+
+	lines, err := ldCfg(f)
+	if err != nil {
+		return c, fmt.Errorf("could not sanitize file %s: %s", f, err)
+	}
+
+	for _, line := range lines {
+
+		l := strings.Fields(line)
+		// empty
+		if len(l) == 0 {
+			continue
+		}
+		complete, err := check.parseLine(l)
 		if err != nil {
-			return c, fmt.Errorf("could not parse config %s", file.Name())
+			return c, fmt.Errorf("could not parse config %s", f)
 		}
 		if complete {
 			c = append(c, check)
 			check = NewCheck()
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		return c, fmt.Errorf("Scanner error: %s", err)
 	}
 
 	return c, nil
