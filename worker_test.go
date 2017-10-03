@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestWorkerStart(t *testing.T) {
-	c := make(chan Job, 10)
+	c := NewBufferedJobQueue(10)
 	w := NewWorker(0, c)
 	defer w.stop()
 
@@ -11,13 +11,13 @@ func TestWorkerStart(t *testing.T) {
 		t.Errorf("Worker ID to be 0 , got %d\n", w.id)
 	}
 	c <- Job{Name: "testjob", Command: "testcommand"}
-	w.start()
+	w.start(c)
 }
 
 func TestWorkerLifecycle(t *testing.T) {
-	c := make(chan Job, 10)
+	c := NewBufferedJobQueue(10)
 	w := NewWorker(0, c)
 
-	w.start()
+	w.start(c)
 	w.stop()
 }

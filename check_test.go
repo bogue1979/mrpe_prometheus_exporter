@@ -5,7 +5,7 @@ import (
 )
 
 func TestCheckRunner(t *testing.T) {
-	jobs := make(chan Job)
+	jobs := NewJobQueue()
 	c := NewCheck()
 	c.Name = "mycheck"
 	c.Command = "mycheck command"

@@ -48,7 +48,7 @@ func TestLoadCfg(t *testing.T) {
 	if len(c) != 3 {
 		t.Errorf("Expected 3 checks loaded! got: %d", len(c))
 	}
-	if c[1].Command != "command mit parametern" {
+	if c[1].Command != "echo parameter eins" {
 		t.Errorf("Expect second command to be 'command mit parametern', got %s", c[1].Command)
 	}
 }

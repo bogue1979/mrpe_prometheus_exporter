@@ -35,7 +35,7 @@ func (c *Check) Stop() {
 }
 
 // Run Check in background
-func (c Check) Run(s chan Job) {
+func (c Check) Run(s JobQueue) {
 
 	ticker := time.NewTicker(time.Second * time.Duration(c.Interval))
 	go func() {

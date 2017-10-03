@@ -2,33 +2,33 @@ package main
 
 import "fmt"
 
+// Workers is a list of Worker
+type Workers []Worker
+
 // Worker represents worker
 type Worker struct {
 	id       int
-	jobQueue chan Job
+	jobQueue JobQueue
 	quitChan chan bool
 }
 
 // NewWorker creates takes a numeric id and a channel w/ worker pool.
-func NewWorker(id int, jobQueue chan Job) Worker {
+func NewWorker(id int, q JobQueue) Worker {
 	return Worker{
 		id:       id,
-		jobQueue: jobQueue,
+		jobQueue: q,
 		quitChan: make(chan bool),
 	}
 }
 
-func (w *Worker) start() {
+func (w *Worker) start(s JobQueue) {
 	go func() {
 		for {
 			select {
 			case job := <-w.jobQueue:
-				result := runCommand(job.Command, job.Delay)
-				if result.PerformanceData() {
-					//fmt.Println("generated PerformanceData")
-				}
-				//fmt.Printf("result: %#v", result)
-				//TODO run job.Command and send output to (not yet implemented ) return channel
+				result := job.Execute()
+				job.Result = result
+				s <- job
 
 			case <-w.quitChan:
 				fmt.Println("Worker stop:", w.id)
@@ -41,6 +41,3 @@ func (w *Worker) start() {
 func (w *Worker) stop() {
 	w.quitChan <- true
 }
-
-// Workers is a list of Worker
-type Workers []Worker

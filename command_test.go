@@ -37,7 +37,7 @@ func TestCommandNotFound(t *testing.T) {
 }
 
 func TestCommandWrongPerfdata(t *testing.T) {
-	cmd1 := runCommand("echo foo", 2)
+	cmd1 := runCommand("echo foo bar", 2)
 	cmd2 := runCommand("echo 'foo | bar'", 2)
 	cmd3 := runCommand("echo 'foo | bar=baz'", 2)
 

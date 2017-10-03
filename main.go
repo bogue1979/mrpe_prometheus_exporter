@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-// Job represents Job scheduled in JobQueue
-type Job struct {
-	Name    string
-	Command string
-	Delay   int
-}
-
 func main() {
 
 	// load config
@@ -27,17 +20,18 @@ func main() {
 
 	// Create the job queue.
 	jobQueueLenght := 20
-	jobQueue := make(chan Job, jobQueueLenght)
+	jobQueue := NewBufferedJobQueue(jobQueueLenght)
 
 	// run checks
 	for _, check := range checks {
-		fmt.Println("MAIN: check", check.Name, check.Interval)
-
 		check.Run(jobQueue)
 	}
 
 	// TODO run go routine to write results into file
-	//resultChannel,resultQuit := newResultWriter()
+	//resultQuit := newResultWriter()
+	resultChan := NewJobQueue()
+	sink := NewSink(resultChan)
+	sink.start()
 
 	var workers []Worker
 	maxWorkers := 4
@@ -45,7 +39,7 @@ func main() {
 	for i := 0; i < maxWorkers; i++ {
 		worker := NewWorker(i, jobQueue)
 		workers = append(workers, worker)
-		worker.start()
+		worker.start(sink.Results)
 	}
 
 	sigs := make(chan os.Signal, 1)
@@ -61,18 +55,18 @@ func main() {
 
 	// wait for Os.Signal to shutown service
 	<-done
-	shutDown(checks, workers)
+	shutDown(checks, workers, sink)
 
 	//TODO: waitgroup for worker and checktickers
 	time.Sleep(time.Second * 2)
 }
 
-func shutDown(c Checks, w Workers) {
+func shutDown(c Checks, w Workers, s Sink) {
 	for _, check := range c {
 		check.Stop()
 	}
 	for _, worker := range w {
 		worker.stop()
 	}
-	// resultQuit <- true
+	s.Stop()
 }

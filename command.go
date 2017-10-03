@@ -19,10 +19,10 @@ type Result struct {
 	Error    error
 }
 
-//TODO: run Job and send Result into channel
-//      on other side of channel use Result to generate Prometheus Metrics
 func runCommand(cmd string, i int) Result {
 	var out, eee bytes.Buffer
+
+	fmt.Printf("run command %s with timeout %d\n", cmd, i)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(i)*time.Second)
 	defer cancel()
@@ -35,7 +35,7 @@ func runCommand(cmd string, i int) Result {
 	}
 	stdout, stderr := out.String(), eee.String()
 
-	//fmt.Println("ProcessStateString:", command.ProcessState.String())
+	fmt.Println("ProcessStateString:", command.ProcessState.String())
 	exit, errr := strconv.Atoi(strings.Fields(command.ProcessState.String())[2])
 	if errr != nil {
 		return NewResult(exit, stdout, stderr, fmt.Errorf("error converting Exitcode %s", errr))
@@ -73,5 +73,4 @@ func (r *Result) PerformanceData() (ok bool) {
 		r.Perf[labelValue[0]] = f
 	}
 	return true
-
 }
