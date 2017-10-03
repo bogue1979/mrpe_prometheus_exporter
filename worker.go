@@ -8,6 +8,7 @@ type Workers []Worker
 // Worker represents worker
 type Worker struct {
 	id       int
+	running  bool
 	jobQueue JobQueue
 	quitChan chan bool
 }
@@ -16,12 +17,14 @@ type Worker struct {
 func NewWorker(id int, q JobQueue) Worker {
 	return Worker{
 		id:       id,
+		running:  false,
 		jobQueue: q,
 		quitChan: make(chan bool),
 	}
 }
 
 func (w *Worker) start(s JobQueue) {
+	w.running = true
 	go func() {
 		for {
 			select {
@@ -39,5 +42,6 @@ func (w *Worker) start(s JobQueue) {
 }
 
 func (w *Worker) stop() {
+	w.running = false
 	w.quitChan <- true
 }

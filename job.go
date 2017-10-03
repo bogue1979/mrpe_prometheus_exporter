@@ -38,10 +38,12 @@ func (j Job) Execute() (result Result) {
 type resultWriter struct {
 	Results  JobQueue
 	quitChan chan bool
+	running  bool
 }
 
 // Stop Resultwriter
 func (s *resultWriter) Stop() {
+	s.running = false
 	s.quitChan <- true
 }
 
@@ -49,6 +51,7 @@ func (s *resultWriter) start() {
 	//gaugeVecs := make(map[string]prometheus.GaugeVec)
 	gauges := make(map[string]prometheus.Gauge)
 	srv := startHTTPServer()
+	s.running = true
 
 	go func() {
 		for {
