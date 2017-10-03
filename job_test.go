@@ -4,7 +4,7 @@ import "testing"
 
 func TestNewSink(t *testing.T) {
 	resultchannel := NewJobQueue()
-	sink := NewSink(resultchannel)
+	sink := newResultWriter(resultchannel)
 	sink.start()
 	sink.Stop()
 }

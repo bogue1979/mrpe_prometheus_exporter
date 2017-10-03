@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // JobQueue represents as named
@@ -37,35 +34,18 @@ func (j Job) Execute() (result Result) {
 	return result
 }
 
-// Sink is resultWriter
-type Sink struct {
+// resultWriter is resultWriter
+type resultWriter struct {
 	Results  JobQueue
 	quitChan chan bool
 }
 
 // Stop Resultwriter
-func (s *Sink) Stop() {
+func (s *resultWriter) Stop() {
 	s.quitChan <- true
 }
 
-func startHTTPServer() *http.Server {
-	srv := &http.Server{Addr: ":8080"}
-
-	http.Handle("/metrics", promhttp.Handler())
-	fmt.Println("Start Webserver")
-
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			// cannot panic, because this probably is an intentional close
-			log.Printf("Httpserver: ListenAndServe() error: %s", err)
-		}
-	}()
-
-	// returning reference so caller can call Shutdown()
-	return srv
-}
-
-func (s *Sink) start() {
+func (s *resultWriter) start() {
 	//gaugeVecs := make(map[string]prometheus.GaugeVec)
 	gauges := make(map[string]prometheus.Gauge)
 	srv := startHTTPServer()
@@ -119,11 +99,4 @@ func (s *Sink) start() {
 			}
 		}
 	}()
-}
-
-// NewSink creates a ResultWriter
-func NewSink(c JobQueue) (s Sink) {
-	return Sink{Results: c,
-		quitChan: make(chan bool),
-	}
 }

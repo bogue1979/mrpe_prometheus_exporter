@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -24,13 +27,13 @@ func main() {
 
 	// run checks
 	for _, check := range checks {
-		check.Run(jobQueue)
+		check.start(jobQueue)
 	}
 
 	// TODO run go routine to write results into file
 	//resultQuit := newResultWriter()
 	resultChan := NewJobQueue()
-	sink := NewSink(resultChan)
+	sink := newResultWriter(resultChan)
 	sink.start()
 
 	var workers []Worker
@@ -61,7 +64,7 @@ func main() {
 	time.Sleep(time.Second * 2)
 }
 
-func shutDown(c Checks, w Workers, s Sink) {
+func shutDown(c Checks, w Workers, s resultWriter) {
 	for _, check := range c {
 		check.Stop()
 	}
@@ -69,4 +72,20 @@ func shutDown(c Checks, w Workers, s Sink) {
 		worker.stop()
 	}
 	s.Stop()
+}
+
+func startHTTPServer() *http.Server {
+	srv := &http.Server{Addr: ":8080"}
+
+	http.Handle("/metrics", promhttp.Handler())
+	fmt.Println("Start Webserver")
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil {
+			// cannot panic, because this probably is an intentional close
+			log.Printf("Httpserver: ListenAndServe() error: %s", err)
+		}
+	}()
+	// returning reference so caller can call Shutdown()
+	return srv
 }

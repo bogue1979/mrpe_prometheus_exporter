@@ -55,6 +55,13 @@ func NewResult(exitcode int, stdout, stderr string, err error) Result {
 	}
 }
 
+// newResultWriter creates a ResultWriter
+func newResultWriter(c JobQueue) (s resultWriter) {
+	return resultWriter{Results: c,
+		quitChan: make(chan bool),
+	}
+}
+
 // PerformanceData parses Stdout String to Perf map
 func (r *Result) PerformanceData() (ok bool) {
 	perfsplit := strings.Split(r.Stdout, "|")

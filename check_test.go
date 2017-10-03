@@ -11,7 +11,7 @@ func TestCheckRunner(t *testing.T) {
 	c.Command = "mycheck command"
 	c.Interval = 1
 
-	c.Run(jobs)
+	c.start(jobs)
 	j := <-jobs
 	if j.Name != "mycheck" {
 		t.Errorf("Expect Jobname testcheck , got %s", j.Name)
