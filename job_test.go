@@ -11,3 +11,11 @@ func TestNewSink(t *testing.T) {
 	}
 	sink.Stop()
 }
+
+func TestExecute(t *testing.T) {
+	j := Job{Command: "exit 0", Delay: 1}
+	r := j.Execute()
+	if r.ExitCode != 0 {
+		t.Errorf("expected exitcode to be 0. got: %v", r.ExitCode)
+	}
+}
