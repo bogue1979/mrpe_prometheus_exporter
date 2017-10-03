@@ -6,12 +6,10 @@ import (
 )
 
 func TestCommand(t *testing.T) {
-	expresult := Result{ExitCode: 0, Stdout: "", Stderr: "", Perf: nil, Error: nil}
-
 	gotresult := runCommand("exit 0", 2)
 
-	if !reflect.DeepEqual(gotresult, expresult) {
-		t.Errorf("Expected result tp be %#v but is was %#v", expresult, gotresult)
+	if gotresult.Error != nil {
+		t.Errorf("Expectet no error, got %s", gotresult.Error)
 	}
 }
 

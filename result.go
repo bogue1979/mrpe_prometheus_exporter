@@ -13,35 +13,37 @@ import (
 // Result represents CheckResult
 type Result struct {
 	ExitCode int
+	Duration int64
 	Stdout   string
 	Stderr   string
 	Perf     map[string]float64
 	Error    error
 }
 
-func runCommand(cmd string, i int) Result {
+func runCommand(cmd string, i int64) Result {
 	var out, eee bytes.Buffer
-
-	fmt.Printf("run command %s with timeout %d\n", cmd, i)
+	var result Result
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(i)*time.Second)
 	defer cancel()
-	command := exec.CommandContext(ctx, "sh", "-c", cmd)
-	//fmt.Printf("Command: sh -c %s\n", cmd)
+	command := exec.CommandContext(ctx, "/bin/sh", "-c", cmd)
 
+	t1 := time.Now()
 	command.Stdout, command.Stderr = &out, &eee
+	t2 := time.Now()
 	if err := command.Run(); err != nil {
 		return NewResult(-1, "", err.Error(), err)
 	}
 	stdout, stderr := out.String(), eee.String()
 
-	fmt.Println("ProcessStateString:", command.ProcessState.String())
 	exit, errr := strconv.Atoi(strings.Fields(command.ProcessState.String())[2])
 	if errr != nil {
 		return NewResult(exit, stdout, stderr, fmt.Errorf("error converting Exitcode %s", errr))
 	}
+	result = NewResult(exit, stdout, stderr, nil)
+	result.Duration = int64(t2.Sub(t1))
 
-	return NewResult(exit, stdout, stderr, nil)
+	return result
 }
 
 // NewResult creates new Result

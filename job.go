@@ -27,16 +27,13 @@ type Job struct {
 	Comment
 	Name    string
 	Command string
-	Delay   int
+	Delay   int64
 	Result
 }
 
 // Execute Job in shell
 func (j Job) Execute() (result Result) {
 	result = runCommand(j.Command, j.Delay)
-	if result.Error != nil {
-		fmt.Println(result.Error)
-	}
 	return result
 }
 
@@ -93,10 +90,26 @@ func (s *Sink) start() {
 					})
 					prometheus.MustRegister(gauges[gaugeExitCodeName])
 					gauges[gaugeExitCodeName].Set(float64(job.Result.ExitCode))
-					continue
+				} else {
+					g.Set(float64(job.Result.ExitCode))
 				}
-				g.Set(float64(job.Result.ExitCode))
 
+				if job.Duration > 0 {
+					gaugeDurationName := fmt.Sprintf("cmk_%s_duration_ns", job.Name)
+					g, ok := gauges[gaugeDurationName]
+					if !ok {
+						gaugeHelp := fmt.Sprintf("Runtime in ns for %s", job.Name)
+						gauges[gaugeDurationName] = prometheus.NewGauge(prometheus.GaugeOpts{
+							Name: gaugeDurationName,
+							Help: gaugeHelp,
+						})
+						prometheus.MustRegister(gauges[gaugeDurationName])
+						gauges[gaugeExitCodeName].Set(float64(job.Result.Duration))
+					} else {
+						g.Set(float64(job.Result.Duration))
+					}
+
+				}
 			case <-s.quitChan:
 				fmt.Println("Stop Webserver")
 				if err := srv.Shutdown(nil); err != nil {

@@ -43,7 +43,7 @@ func (c Check) Run(s JobQueue) {
 		for {
 			select {
 			case <-ticker.C:
-				s <- Job{Command: c.Command, Name: c.Name}
+				s <- Job{Command: c.Command, Name: c.Name, Delay: c.Interval}
 			case <-c.quitChan:
 				fmt.Printf("Stopping %s\n", c.Name)
 				ticker.Stop()
