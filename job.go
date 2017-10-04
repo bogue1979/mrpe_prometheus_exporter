@@ -68,7 +68,7 @@ func (s *resultWriter) start() {
 				_, ok := gauges[gaugeExitCodeName]
 				if !ok {
 					//TODO use help string from job.Comment
-					gaugeHelp := fmt.Sprintf("Check exitcode for %s", job.Name)
+					gaugeHelp := fmt.Sprintf("check exitcode for %s", job.Name)
 					gauges[gaugeExitCodeName] = prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
 							Name: gaugeExitCodeName,
@@ -85,7 +85,7 @@ func (s *resultWriter) start() {
 					gaugeDurationName := fmt.Sprintf("cmk_%s_duration_ns", job.Name)
 					_, ok := gauges[gaugeDurationName]
 					if !ok {
-						gaugeHelp := fmt.Sprintf("Runtime in ns for %s", job.Name)
+						gaugeHelp := fmt.Sprintf("runtime in ns for %s", job.Name)
 						gauges[gaugeDurationName] = prometheus.NewGaugeVec(
 							prometheus.GaugeOpts{
 								Name: gaugeDurationName,

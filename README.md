@@ -24,13 +24,13 @@ Will run by default every minute the fooplugin. You can change the check interva
 
 Metrics:
 ```
-# HELP cmk_fooplugin_duration_ns Runtime in ns for fooplugin
+# HELP cmk_fooplugin_duration_ns runtime in ns for fooplugin
 # TYPE cmk_fooplugin_duration_ns gauge
 cmk_fooplugin_duration_ns{stage="dev"} 89
 
-# HELP cmk_fooplugin_exit_code Check exitcode for fooplugin
+# HELP cmk_fooplugin_exit_code check exitcode for fooplugin
 # TYPE cmk_fooplugin_exit_code gauge
-cmk_one_sched_exit_code{stage="dev"} 0
+cmk_fooplugin_exit_code{stage="dev"} 0
 ```
 
 ## Todo
