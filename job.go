@@ -36,9 +36,11 @@ func (j Job) Execute() (result Result) {
 
 // resultWriter is resultWriter
 type resultWriter struct {
-	Results  JobQueue
-	quitChan chan bool
-	running  bool
+	Results    JobQueue
+	quitChan   chan bool
+	running    bool
+	StageKey   string
+	StageValue string
 }
 
 // Stop Resultwriter
@@ -49,7 +51,7 @@ func (s *resultWriter) Stop() {
 
 func (s *resultWriter) start() {
 	//gaugeVecs := make(map[string]prometheus.GaugeVec)
-	gauges := make(map[string]prometheus.Gauge)
+	gauges := make(map[string]*prometheus.GaugeVec)
 	srv := startHTTPServer()
 	s.running = true
 
@@ -63,35 +65,38 @@ func (s *resultWriter) start() {
 				}
 				// ExitcodeName
 				gaugeExitCodeName := fmt.Sprintf("cmk_%s_exit_code", job.Name)
-				g, ok := gauges[gaugeExitCodeName]
+				_, ok := gauges[gaugeExitCodeName]
 				if !ok {
-					//TODO use help string in job.Comment
+					//TODO use help string from job.Comment
 					gaugeHelp := fmt.Sprintf("Check exitcode for %s", job.Name)
-					gauges[gaugeExitCodeName] = prometheus.NewGauge(prometheus.GaugeOpts{
-						Name: gaugeExitCodeName,
-						Help: gaugeHelp,
-					})
+					gauges[gaugeExitCodeName] = prometheus.NewGaugeVec(
+						prometheus.GaugeOpts{
+							Name: gaugeExitCodeName,
+							Help: gaugeHelp,
+						},
+						[]string{s.StageKey},
+					)
 					prometheus.MustRegister(gauges[gaugeExitCodeName])
-					gauges[gaugeExitCodeName].Set(float64(job.Result.ExitCode))
-				} else {
-					g.Set(float64(job.Result.ExitCode))
 				}
+				gauges[gaugeExitCodeName].With(
+					prometheus.Labels{s.StageKey: s.StageValue}).Set(float64(job.Result.ExitCode))
 
 				if job.Duration > 0 {
 					gaugeDurationName := fmt.Sprintf("cmk_%s_duration_ns", job.Name)
-					g, ok := gauges[gaugeDurationName]
+					_, ok := gauges[gaugeDurationName]
 					if !ok {
 						gaugeHelp := fmt.Sprintf("Runtime in ns for %s", job.Name)
-						gauges[gaugeDurationName] = prometheus.NewGauge(prometheus.GaugeOpts{
-							Name: gaugeDurationName,
-							Help: gaugeHelp,
-						})
+						gauges[gaugeDurationName] = prometheus.NewGaugeVec(
+							prometheus.GaugeOpts{
+								Name: gaugeDurationName,
+								Help: gaugeHelp,
+							},
+							[]string{s.StageKey},
+						)
 						prometheus.MustRegister(gauges[gaugeDurationName])
-						gauges[gaugeExitCodeName].Set(float64(job.Result.Duration))
-					} else {
-						g.Set(float64(job.Result.Duration))
 					}
-
+					gauges[gaugeDurationName].With(
+						prometheus.Labels{s.StageKey: s.StageValue}).Set(float64(job.Result.Duration))
 				}
 			case <-s.quitChan:
 				fmt.Println("Stop Webserver")

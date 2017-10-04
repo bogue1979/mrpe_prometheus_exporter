@@ -56,9 +56,11 @@ func NewResult(exitcode int, stdout, stderr string, err error) Result {
 }
 
 // newResultWriter creates a ResultWriter
-func newResultWriter(c JobQueue) (s resultWriter) {
+func newResultWriter(c JobQueue, sKey, sValue string) (s resultWriter) {
 	return resultWriter{Results: c,
-		quitChan: make(chan bool),
+		quitChan:   make(chan bool),
+		StageKey:   sKey,
+		StageValue: sValue,
 	}
 }
 

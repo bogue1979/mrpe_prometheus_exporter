@@ -14,7 +14,11 @@ import (
 
 func main() {
 
-	// load config
+	//TODO flag for environment vars
+	stagekey := "e42stage"
+	stageval := "dev"
+
+	//TODO flag for confdir
 	confdir := "./conf.d"
 	checks, err := loadCfgDir(confdir)
 	if err != nil {
@@ -30,15 +34,14 @@ func main() {
 		check.start(jobQueue)
 	}
 
-	// TODO run go routine to write results into file
-	//resultQuit := newResultWriter()
+	// resultWriter
 	resultChan := NewJobQueue()
-	sink := newResultWriter(resultChan)
+	sink := newResultWriter(resultChan, stagekey, stageval)
 	sink.start()
 
 	var workers []Worker
 	maxWorkers := 4
-	// Start the dispatcher which will write result string to resultWriter Channel(TODO).
+	// Start the dispatcher which will write result string to resultWriter Channel
 	for i := 0; i < maxWorkers; i++ {
 		worker := NewWorker(i, jobQueue)
 		workers = append(workers, worker)
