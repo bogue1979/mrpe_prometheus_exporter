@@ -3,7 +3,7 @@ package main
 import "testing"
 
 func TestNewSink(t *testing.T) {
-	resultchannel := NewJobQueue()
+	resultchannel := newJobQueue()
 	sink := newResultWriter(resultchannel, "stage", "test")
 	sink.start()
 	if !sink.running {

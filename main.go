@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,20 +15,20 @@ import (
 
 func main() {
 
-	//TODO flag for environment vars
-	stagekey := "e42stage"
-	stageval := "dev"
+	var stagekey = flag.String("env.key", "e42stage", "environment differentiator")
+	var stageval = flag.String("env.val", "dev", "environment name")
+	var confdir = flag.String("conf.dir", "./conf.d", "directory with mrpe config files")
 
-	//TODO flag for confdir
-	confdir := "./conf.d"
-	checks, err := loadCfgDir(confdir)
+	flag.Parse()
+
+	checks, err := loadCfgDir(*confdir)
 	if err != nil {
-		log.Fatalf("Could not load config dir %s: %s", confdir, err.Error())
+		log.Fatalf("Could not load config dir %s: %s", *confdir, err.Error())
 	}
 
 	// Create the job queue.
 	jobQueueLenght := 20
-	jobQueue := NewBufferedJobQueue(jobQueueLenght)
+	jobQueue := newBufferedJobQueue(jobQueueLenght)
 
 	// run checks
 	for _, check := range checks {
@@ -35,15 +36,15 @@ func main() {
 	}
 
 	// resultWriter
-	resultChan := NewJobQueue()
-	sink := newResultWriter(resultChan, stagekey, stageval)
+	resultChan := newJobQueue()
+	sink := newResultWriter(resultChan, *stagekey, *stageval)
 	sink.start()
 
 	var workers []Worker
 	maxWorkers := 4
 	// Start the dispatcher which will write result string to resultWriter Channel
 	for i := 0; i < maxWorkers; i++ {
-		worker := NewWorker(i, jobQueue)
+		worker := newWorker(i, jobQueue)
 		workers = append(workers, worker)
 		worker.start(sink.Results)
 	}

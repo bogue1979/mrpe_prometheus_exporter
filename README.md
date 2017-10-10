@@ -35,6 +35,6 @@ cmk_fooplugin_exit_code{stage="dev"} 0
 
 ## Todo
 
-- [ ] configuration via flag
+- [x] configuration via flag
 - [ ] initscript for OS
 - [ ] ...

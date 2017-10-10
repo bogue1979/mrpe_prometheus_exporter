@@ -9,13 +9,13 @@ import (
 // JobQueue represents as named
 type JobQueue chan Job
 
-// NewJobQueue creates a new JobQueue
-func NewJobQueue() JobQueue {
+// newJobQueue creates a new JobQueue
+func newJobQueue() JobQueue {
 	return make(chan Job)
 }
 
-// NewBufferedJobQueue returns buffered JobQueue
-func NewBufferedJobQueue(i int) JobQueue {
+// newBufferedJobQueue returns buffered JobQueue
+func newBufferedJobQueue(i int) JobQueue {
 	return make(chan Job, i)
 }
 

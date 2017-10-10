@@ -13,8 +13,8 @@ type Worker struct {
 	quitChan chan bool
 }
 
-// NewWorker creates takes a numeric id and a channel w/ worker pool.
-func NewWorker(id int, q JobQueue) Worker {
+// newWorker creates takes a numeric id and a channel w/ worker pool.
+func newWorker(id int, q JobQueue) Worker {
 	return Worker{
 		id:       id,
 		running:  false,
