@@ -15,7 +15,7 @@ import (
 
 func main() {
 
-	var stagekey = flag.String("env.key", "e42stage", "environment differentiator")
+	var stagekey = flag.String("env.key", "stage", "environment differentiator")
 	var stageval = flag.String("env.val", "dev", "environment name")
 	var confdir = flag.String("conf.dir", "./conf.d", "directory with mrpe config files")
 

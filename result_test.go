@@ -1,7 +1,6 @@
 package main
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -15,14 +14,18 @@ func TestCommand(t *testing.T) {
 
 func TestCommandPerfdata(t *testing.T) {
 	expPerf := map[string]float64{
-		"foo": 1.3,
-		"bar": 1,
+		"foo":      1.3,
+		"bar":      1,
+		"duration": 5,
 	}
 	gotresult := runCommand("echo 'testoutput | foo=1.3, bar=1'", 2)
 	gotresult.PerformanceData()
 
-	if !reflect.DeepEqual(gotresult.Perf, expPerf) {
-		t.Errorf("Expected result tp be %#v but is was %#v", expPerf, gotresult.Perf)
+	for k := range expPerf {
+		_, ok := gotresult.Perf[k]
+		if !ok {
+			t.Errorf("Expected to have %s in PerformanceData map, but it is not", k)
+		}
 	}
 }
 

@@ -83,5 +83,8 @@ func (r *Result) PerformanceData() (ok bool) {
 		}
 		r.Perf[labelValue[0]] = f
 	}
+	if r.Duration > 0 {
+		r.Perf["duration"] = float64(r.Duration)
+	}
 	return true
 }

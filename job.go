@@ -60,44 +60,29 @@ func (s *resultWriter) start() {
 			select {
 			case job := <-s.Results:
 
-				if len(job.Perf) > 0 {
-					continue
-				}
-				// ExitcodeName
-				gaugeExitCodeName := fmt.Sprintf("cmk_%s_exit_code", job.Name)
-				_, ok := gauges[gaugeExitCodeName]
+				gaugeName := fmt.Sprintf("cmk_%s", job.Name)
+				_, ok := gauges[gaugeName]
 				if !ok {
-					//TODO use help string from job.Comment
-					gaugeHelp := fmt.Sprintf("check exitcode for %s", job.Name)
-					gauges[gaugeExitCodeName] = prometheus.NewGaugeVec(
+					gaugeHelp := fmt.Sprintf("Check_MK metrics for %s", job.Name)
+					gauges[gaugeName] = prometheus.NewGaugeVec(
 						prometheus.GaugeOpts{
-							Name: gaugeExitCodeName,
+							Name: gaugeName,
 							Help: gaugeHelp,
 						},
-						[]string{s.StageKey},
+						[]string{s.StageKey, "metric"},
 					)
-					prometheus.MustRegister(gauges[gaugeExitCodeName])
+					prometheus.MustRegister(gauges[gaugeName])
 				}
-				gauges[gaugeExitCodeName].With(
-					prometheus.Labels{s.StageKey: s.StageValue}).Set(float64(job.Result.ExitCode))
 
-				if job.Duration > 0 {
-					gaugeDurationName := fmt.Sprintf("cmk_%s_duration_ns", job.Name)
-					_, ok := gauges[gaugeDurationName]
-					if !ok {
-						gaugeHelp := fmt.Sprintf("runtime in ns for %s", job.Name)
-						gauges[gaugeDurationName] = prometheus.NewGaugeVec(
-							prometheus.GaugeOpts{
-								Name: gaugeDurationName,
-								Help: gaugeHelp,
-							},
-							[]string{s.StageKey},
-						)
-						prometheus.MustRegister(gauges[gaugeDurationName])
+				if len(job.Perf) > 0 {
+					for m, v := range job.Perf {
+						gauges[gaugeName].With(
+							prometheus.Labels{s.StageKey: s.StageValue, "metric": m}).Set(v)
 					}
-					gauges[gaugeDurationName].With(
-						prometheus.Labels{s.StageKey: s.StageValue}).Set(float64(job.Result.Duration))
 				}
+				gauges[gaugeName].With(
+					prometheus.Labels{s.StageKey: s.StageValue, "metric": "exit"}).Set(float64(job.Result.ExitCode))
+
 			case <-s.quitChan:
 				fmt.Println("Stop Webserver")
 				if err := srv.Shutdown(nil); err != nil {
