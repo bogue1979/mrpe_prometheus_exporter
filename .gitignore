@@ -1,1 +1,3 @@
 /mrpe_prometheus_exporter
+/vendor
+/build

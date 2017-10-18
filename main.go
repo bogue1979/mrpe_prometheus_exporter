@@ -13,13 +13,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+var version = "undef"
+
 func main() {
 
 	var stagekey = flag.String("env.key", "stage", "environment differentiator")
 	var stageval = flag.String("env.val", "dev", "environment name")
 	var confdir = flag.String("conf.dir", "./conf.d", "directory with mrpe config files")
+	var versionstring = flag.Bool("version", false, "show version and exit")
 
 	flag.Parse()
+
+	if *versionstring {
+		fmt.Printf("Version: %s\n", version)
+		os.Exit(0)
+	}
 
 	checks, err := loadCfgDir(*confdir)
 	if err != nil {
@@ -90,6 +98,7 @@ func startHTTPServer() *http.Server {
 			log.Printf("Httpserver: ListenAndServe() error: %s", err)
 		}
 	}()
+
 	// returning reference so caller can call Shutdown()
 	return srv
 }
