@@ -18,9 +18,9 @@ build:
     - name: "run build"
       parallel:
         - name: "linux binary"
-          command: docker run --rm -e VERSION=$VERSION -e GOOS=linux -e GOARCH=amd64 -e CGO_ENABLED=0 -v $(pwd):/go/src/code -w /go/src/code local-golang go get -d && go build -ldflags "-X main.version=$VERSION" -o build/bin/mrpe_prometheus_exporter.amd64
+          command: docker run --rm -e VERSION=$VERSION -e GOOS=linux -e GOARCH=amd64 -e CGO_ENABLED=0 -v $(pwd):/go/src/code -w /go/src/code local-golang go build -ldflags "-X main.version=$VERSION" -o build/bin/mrpe_prometheus_exporter.amd64
         - name: "darwin binary"
-          command: docker run --rm -e GOOS=darwin -e GOARCH=amd64 -e CGO_ENABLED=0 -v $(pwd):/go/src/code -w /go/src/code local-golang go get -d && go build -ldflags "-X main.version=$VERSION" -o build/bin/mrpe_prometheus_exporter.darwin
+          command: docker run --rm -e GOOS=darwin -e GOARCH=amd64 -e CGO_ENABLED=0 -v $(pwd):/go/src/code -w /go/src/code local-golang go build -ldflags "-X main.version=$VERSION" -o build/bin/mrpe_prometheus_exporter.darwin
 
     - name: "remove last package"
       command: rm build/mrpe-prometheus-exporter-*.rpm

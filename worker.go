@@ -31,9 +31,9 @@ func (w *Worker) start(s JobQueue) {
 			case job := <-w.jobQueue:
 				result := job.Execute()
 				job.Result = result
-				if !job.PerformanceData() {
+				if err := job.PerformanceData(); err != nil {
 					//TODO: Logging
-					fmt.Println("problem getting PerformanceData")
+					fmt.Println("problem getting PerformanceData", err)
 				}
 				s <- job
 
