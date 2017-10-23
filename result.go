@@ -35,7 +35,6 @@ func runCommand(cmd string, i int64) Result {
 	duration := t.Sub(start)
 
 	if err != nil {
-		//fmt.Printf("state %s\n", err.Error())
 		if strings.HasPrefix(err.Error(), "exit status") {
 			e, errr := strconv.Atoi(strings.Fields(err.Error())[2])
 			if errr != nil {

@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 //TODO feels not good but it works ...
@@ -56,7 +58,7 @@ func loadCfgDir(d string) (c Checks, e error) {
 
 	for _, f := range files {
 		if strings.HasSuffix(f.Name(), ".cfg") {
-			fmt.Printf("read Configfile: %s\n", f.Name())
+			log.Infof("read Configfile: %s", f.Name())
 			check, err := loadCfg(d + "/" + f.Name())
 			if err != nil {
 				return c, err

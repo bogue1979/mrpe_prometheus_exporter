@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 // JobQueue represents as named
@@ -84,7 +85,7 @@ func (s *resultWriter) start() {
 					prometheus.Labels{s.StageKey: s.StageValue, "metric": "exit"}).Set(float64(job.Result.ExitCode))
 
 			case <-s.quitChan:
-				fmt.Println("Stop Webserver")
+				log.Info("Stop Webserver")
 				if err := srv.Shutdown(nil); err != nil {
 					panic(err) // failure/timeout shutting down the server gracefully
 				}

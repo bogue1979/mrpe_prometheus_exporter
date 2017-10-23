@@ -1,6 +1,6 @@
 package main
 
-import "fmt"
+import log "github.com/sirupsen/logrus"
 
 // Workers is a list of Worker
 type Workers []Worker
@@ -31,18 +31,16 @@ func (w *Worker) start(s JobQueue) {
 			case job := <-w.jobQueue:
 				result := job.Execute()
 				if job.Result.Error != nil {
-					//TODO: Logging
-					//fmt.Printf("error in result for %s: %s", job.Name, job.Result.Error)
+					log.Debugf("error in result for %s: %s", job.Name, job.Result.Error)
 				}
 				job.Result = result
 				if err := job.PerformanceData(); err != nil {
-					//TODO: Logging
-					fmt.Println("problem getting PerformanceData", err)
+					log.Errorf("problem getting PerformanceData: %s", err)
 				}
 				s <- job
 
 			case <-w.quitChan:
-				fmt.Println("Worker stop:", w.id)
+				log.Infof("Worker stop: %d", w.id)
 				return
 			}
 		}

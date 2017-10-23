@@ -52,6 +52,6 @@ cmk_fooplugin{env="test",metric="foo"} 2
 ## Todo
 
 - [x] configuration via flag
-- [ ] logging
+- [x] logging
 - [ ] initscript for OS
 - [ ] ...

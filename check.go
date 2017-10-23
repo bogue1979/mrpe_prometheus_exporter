@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Comment represents comment for prometheus page
@@ -39,13 +40,13 @@ func (c Check) start(s JobQueue) {
 
 	ticker := time.NewTicker(time.Second * time.Duration(c.Interval))
 	go func() {
-		fmt.Printf("Start %s with Checkinterval %d Seconds\n", c.Name, c.Interval)
+		log.Infof("Start %s with Checkinterval %d Seconds", c.Name, c.Interval)
 		for {
 			select {
 			case <-ticker.C:
 				s <- Job{Command: c.Command, Name: c.Name, Delay: c.Interval}
 			case <-c.quitChan:
-				fmt.Printf("Stopping %s\n", c.Name)
+				log.Infof("Stopping %s", c.Name)
 				ticker.Stop()
 				return
 			}

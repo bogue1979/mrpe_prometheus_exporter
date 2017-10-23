@@ -3,17 +3,38 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var version = "undef"
+
+func setLogLevel(s string) {
+	switch s {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "info":
+		log.SetLevel(log.InfoLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+	case "fatal":
+		log.SetLevel(log.FatalLevel)
+	case "panic":
+		log.SetLevel(log.PanicLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
+		log.Errorf("cannot use %s as log.lvl, will use default info level", s)
+	}
+}
 
 func main() {
 
@@ -21,8 +42,15 @@ func main() {
 	var stageval = flag.String("env.val", "dev", "environment name")
 	var confdir = flag.String("conf.dir", "./conf.d", "directory with mrpe config files")
 	var versionstring = flag.Bool("version", false, "show version and exit")
+	var loglevel = flag.String("log.lvl", "info", "loglevel from [debug,info,warn,error,fatal,panic]")
+	var logjson = flag.Bool("log.json", false, "log as json")
 
 	flag.Parse()
+
+	setLogLevel(*loglevel)
+	if *logjson {
+		log.SetFormatter(&log.JSONFormatter{})
+	}
 
 	if *versionstring {
 		fmt.Printf("Version: %s\n", version)
@@ -62,11 +90,11 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigs
-		fmt.Printf("Got %s signal\n", sig)
+		log.Infof("Got %s signal", sig)
 		done <- true
 	}()
 
-	fmt.Println("Program started")
+	log.Info("Program started")
 
 	// wait for Os.Signal to shutown service
 	<-done
@@ -90,7 +118,7 @@ func startHTTPServer() *http.Server {
 	srv := &http.Server{Addr: ":8080"}
 
 	http.Handle("/metrics", promhttp.Handler())
-	fmt.Println("Start Webserver")
+	log.Info("Start Webserver")
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
