@@ -59,8 +59,8 @@ func TestNoPerformanceData(t *testing.T) {
 func TestCommandNotFound(t *testing.T) {
 	gotresult := runCommand("testcommand not found", 1)
 
-	if gotresult.ExitCode != -1 {
-		t.Errorf("Expected results Exitcode to be -1 but is was %v", gotresult.ExitCode)
+	if gotresult.ExitCode == 0 {
+		t.Errorf("Expected results Exitcode not to be 0 but is was %v", gotresult.ExitCode)
 	}
 }
 

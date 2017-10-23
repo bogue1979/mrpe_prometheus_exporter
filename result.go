@@ -14,7 +14,7 @@ import (
 // Result represents CheckResult
 type Result struct {
 	ExitCode int
-	Duration int64
+	Duration float64
 	Stdout   string
 	Stderr   string
 	Perf     map[string]float64
@@ -22,27 +22,34 @@ type Result struct {
 }
 
 func runCommand(cmd string, i int64) Result {
-	var out, eee bytes.Buffer
-	var result Result
-
+	var sout, serr bytes.Buffer
+	var exit = 0
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(i)*time.Second)
 	defer cancel()
 	command := exec.CommandContext(ctx, "/bin/sh", "-c", cmd)
+	command.Stdout, command.Stderr = &sout, &serr
 
-	t1 := time.Now()
-	command.Stdout, command.Stderr = &out, &eee
-	t2 := time.Now()
-	if err := command.Run(); err != nil {
-		return NewResult(-1, "", err.Error(), err)
-	}
-	stdout, stderr := out.String(), eee.String()
+	start := time.Now()
+	err := command.Run()
+	t := time.Now()
+	duration := t.Sub(start)
 
-	exit, errr := strconv.Atoi(strings.Fields(command.ProcessState.String())[2])
-	if errr != nil {
-		return NewResult(exit, stdout, stderr, fmt.Errorf("error converting Exitcode %s", errr))
+	if err != nil {
+		//fmt.Printf("state %s\n", err.Error())
+		if strings.HasPrefix(err.Error(), "exit status") {
+			e, errr := strconv.Atoi(strings.Fields(err.Error())[2])
+			if errr != nil {
+				return NewResult(-1, sout.String(), serr.String(), fmt.Errorf("error converting Exitcode %s", errr))
+			}
+			exit = e
+		}
+		if err.Error() == "signal: killed" {
+			return NewResult(-1, "", "killed", err)
+		}
 	}
-	result = NewResult(exit, stdout, stderr, nil)
-	result.Duration = int64(t2.Sub(t1))
+
+	result := NewResult(exit, sout.String(), serr.String(), err)
+	result.Duration = duration.Seconds()
 
 	return result
 }
@@ -107,22 +114,19 @@ func perfstringMap(perflist []string) (r map[string]float64, err error) {
 
 // PerformanceData parses Stdout String to Perf map
 func (r *Result) PerformanceData() (err error) {
+	r.Perf = make(map[string]float64)
+	r.Perf["duration"] = r.Duration
+
 	perfsplit := strings.Split(r.Stdout, "|")
 	if len(perfsplit) != 2 {
 		return nil
 	}
-	r.Perf = make(map[string]float64)
-	if r.Duration > 0 {
-		r.Perf["duration"] = float64(r.Duration)
-	}
-
 	s := strings.Split(perfsplit[1], " ")
 	for _, i := range s {
 
 		rx := regexp.MustCompile("^'?(.*)'?=([1-9.,]+)([a-zA-Z%]+)*;?([0-9.,]*);?([0-9.,]*);?([0-9.,]*);?([0-9.,]*)")
 		perflist := rx.FindStringSubmatch(i)
 		if len(perflist) > 0 {
-			fmt.Printf("%q\n", perflist)
 			perfmap, err := perfstringMap(perflist)
 			if err != nil {
 				return fmt.Errorf("Problems generating PerformanceData: %s", err)

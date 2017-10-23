@@ -24,7 +24,7 @@ type Check struct {
 // NewCheck to create new Check
 func NewCheck() Check {
 	return Check{
-		Interval: 5,
+		Interval: 60,
 		quitChan: make(chan bool),
 	}
 }

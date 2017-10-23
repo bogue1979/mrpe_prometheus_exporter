@@ -30,6 +30,10 @@ func (w *Worker) start(s JobQueue) {
 			select {
 			case job := <-w.jobQueue:
 				result := job.Execute()
+				if job.Result.Error != nil {
+					//TODO: Logging
+					//fmt.Printf("error in result for %s: %s", job.Name, job.Result.Error)
+				}
 				job.Result = result
 				if err := job.PerformanceData(); err != nil {
 					//TODO: Logging

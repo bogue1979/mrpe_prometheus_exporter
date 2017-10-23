@@ -15,6 +15,9 @@ func TestLoadCfgDir(t *testing.T) {
 	if len(c) != 4 {
 		t.Errorf("Expected 4 checks loaded! got: %d", len(c))
 	}
+	if c[3].Interval != 45 {
+		t.Errorf("Expected check interval of 45 ! got: %d", c[3].Interval)
+	}
 }
 
 func TestLoadCfgDirFail(t *testing.T) {
