@@ -1,5 +1,9 @@
 build:
   tasks:
+    - name: "exit if no $VERSION"
+      command: echo cannot continue without \$VERSION set && exit 1
+      only_if: test -z $VERSION
+
     - name: "ruby docker image"
       command: cat docker/Dockerfile.fpm | docker build -t local-fpm -
       only_if: test $(docker images | grep local-fpm ; echo $?) -ne 0
@@ -9,28 +13,67 @@ build:
       only_if: test $(docker images | grep local-golang ; echo $?) -ne 0
 
     - name: "vendor dependencies"
-      command: docker run --rm -v $(pwd):/go/src/code -w /go/src/code local-golang dep ensure
+      command: >
+        docker run --rm
+        -v $(pwd):/go/src/code
+        -w /go/src/code local-golang
+        dep ensure
       only_if: test $(test -d ./vendor; echo $?) -ne 0
 
     - name: "go test"
-      command: docker run --rm -v $(pwd):/go/src/code -w /go/src/code local-golang go get -d && go test
+      command: >
+        docker run --rm
+        -v $(pwd):/go/src/code
+        -w /go/src/code local-golang
+        go get -d && go test
 
     - name: "run build"
       parallel:
         - name: "linux binary"
-          command: docker run --rm -e VERSION=$VERSION -e GOOS=linux -e GOARCH=amd64 -e CGO_ENABLED=0 -v $(pwd):/go/src/code -w /go/src/code local-golang go build -ldflags "-X main.version=$VERSION" -o build/bin/mrpe_prometheus_exporter.amd64
+          command: >
+            docker run --rm
+            -e VERSION=$VERSION
+            -e GOOS=linux
+            -e GOARCH=amd64
+            -e CGO_ENABLED=0
+            -v $(pwd):/go/src/code
+            -w /go/src/code local-golang
+            go build
+            -ldflags "-X main.version=$VERSION"
+            -o build/bin/mrpe_prometheus_exporter.amd64
+
         - name: "darwin binary"
-          command: docker run --rm -e GOOS=darwin -e GOARCH=amd64 -e CGO_ENABLED=0 -v $(pwd):/go/src/code -w /go/src/code local-golang go build -ldflags "-X main.version=$VERSION" -o build/bin/mrpe_prometheus_exporter.darwin
+          command: >
+            docker run --rm
+            -e GOOS=darwin
+            -e GOARCH=amd64
+            -e CGO_ENABLED=0
+            -v $(pwd):/go/src/code
+            -w /go/src/code local-golang
+            go build
+            -ldflags "-X main.version=$VERSION"
+            -o build/bin/mrpe_prometheus_exporter.darwin
 
     - name: "remove last package"
       command: rm build/mrpe-prometheus-exporter-*.rpm
 
     - name: "create package"
-      command: docker run --rm -v $PWD:/code -w /code/build local-fpm:latest fpm -s dir -t rpm -n mrpe-prometheus-exporter -v 0.0.1 ./bin/mrpe_prometheus_exporter.amd64=/usr/local/bin/mrpe_prometheus_exporter
+      command: >
+        docker run --rm
+        -v $PWD:/code
+        -w /code/build
+        local-fpm:latest
+        fpm
+        -s dir
+        -t rpm
+        -n mrpe-prometheus-exporter
+        -v $VERSION
+        ./bin/mrpe_prometheus_exporter.amd64=/usr/local/bin/mrpe_prometheus_exporter
 
   cleanup:
     - name: "cleanup build"
       command: echo "cleanup ..."
+
 
 deploy:
   tasks:
